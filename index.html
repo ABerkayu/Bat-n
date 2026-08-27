@@ -57,9 +57,12 @@
   /* --- Overlays --- */
   .overlay {
     position:absolute; inset:0; z-index:50; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; text-align:center;
+    align-items:center; justify-content:center; justify-content:safe center; text-align:center;
     background:linear-gradient(180deg, #1b1030, #3a1655 60%, #1b1030);
-    color:#fff; padding:24px; gap:14px;
+    color:#fff; gap:14px;
+    padding:max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right))
+            max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+    overflow-y:auto;
   }
   .overlay h1 { font-size:clamp(22px,4.5vw,34px); color:#ffd35c; text-shadow:0 2px 0 #7a4a00; }
   .overlay p { font-size:clamp(13px,2.4vw,17px); max-width:620px; line-height:1.5; color:#e9d9ff; }
@@ -69,6 +72,16 @@
     box-shadow:0 5px 0 #b3730a, 0 8px 14px rgba(0,0,0,.4); cursor:pointer;
   }
   .btn:active { transform:translateY(3px); box-shadow:0 2px 0 #b3730a; }
+
+  /* iPhone'da Safari araç çubuğu yüzünden yatay modda kısa kalan ekranlar için sıkışık düzen */
+  @media (max-height: 420px) {
+    .overlay { gap:6px; }
+    .overlay .badge { font-size:26px; }
+    .overlay h1 { font-size:clamp(15px,3.6vw,20px); }
+    .overlay p { font-size:clamp(10px,1.9vw,12px); line-height:1.25; }
+    .overlay .ctrl-hint { display:none; }
+    .overlay .btn { margin-top:2px; padding:8px 22px; font-size:14px; }
+  }
   #end-screen { display:none; }
   #end-screen.show { display:flex; }
   .badge { font-size:46px; }
@@ -153,7 +166,7 @@
     <p>Kara büyücünün kalesinde esir tutulan Prenses'i kurtarmak için yola çıkan cesur şövalye Batın'a yardım et!
     3 bölümlük bu maceada engelleri aş, canavarların üstüne zıplayarak onları alt et, altınları topla ve her bölümün
     sonunda Batın ile Prenses'in aşk dolu anlarına tanık ol.</p>
-    <p style="opacity:.8">Sol/Sağ dokun: hareket &nbsp;•&nbsp; ZIPLA: zıpla (canavarların üstüne basarak yenebilirsin) &nbsp;•&nbsp; Klavye: ok tuşları / boşluk</p>
+    <p class="ctrl-hint" style="opacity:.8">Sol/Sağ dokun: hareket &nbsp;•&nbsp; ZIPLA: zıpla (canavarların üstüne basarak yenebilirsin) &nbsp;•&nbsp; Klavye: ok tuşları / boşluk</p>
     <button class="btn" id="start-btn">BAŞLA ▶</button>
   </div>
 
