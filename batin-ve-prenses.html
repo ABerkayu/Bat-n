@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Şövalye Batın ve Esir Prenses</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  html,body {
+    width:100%; height:100%; overflow:hidden; background:#000;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    touch-action:none;
+  }
+  #app { position:fixed; inset:0; width:100%; height:100%; overflow:hidden; background:#000; }
+  #game {
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    background:#7ec8f2; display:block; image-rendering:pixelated;
+  }
+
+  /* --- HUD --- */
+  #hud {
+    position:absolute; top:0; left:0; right:0; padding:10px 16px;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    pointer-events:none; z-index:20; font-weight:700; color:#fff;
+    text-shadow:0 2px 3px rgba(0,0,0,.6);
+  }
+  #hud .lives { font-size:20px; letter-spacing:2px; }
+  #hud .score { font-size:20px; }
+  #hud .chapter {
+    position:absolute; left:50%; top:10px; transform:translateX(-50%);
+    font-size:14px; background:rgba(0,0,0,0.35); padding:4px 14px; border-radius:14px;
+    letter-spacing:.5px;
+  }
+
+  /* --- Touch controls --- */
+  #touch-controls {
+    position:absolute; inset:0; z-index:25; pointer-events:none;
+    display:none;
+  }
+  #touch-controls.active { display:block; }
+  .pad-btn {
+    position:absolute; bottom:22px; pointer-events:auto;
+    display:flex; align-items:center; justify-content:center;
+    width:64px; height:64px; border-radius:50%;
+    background:rgba(255,255,255,0.18); border:2px solid rgba(255,255,255,0.45);
+    color:#fff; font-size:26px; font-weight:800;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pad-btn.pressed { background:rgba(255,255,255,0.4); }
+  #btn-left  { left:20px; bottom:22px; }
+  #btn-right { left:96px; bottom:22px; }
+  #btn-jump  { right:24px; bottom:28px; width:82px; height:82px; font-size:15px; }
+
+  /* --- Overlays --- */
+  .overlay {
+    position:absolute; inset:0; z-index:50; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center;
+    background:linear-gradient(180deg, #1b1030, #3a1655 60%, #1b1030);
+    color:#fff; padding:24px; gap:14px;
+  }
+  .overlay h1 { font-size:clamp(22px,4.5vw,34px); color:#ffd35c; text-shadow:0 2px 0 #7a4a00; }
+  .overlay p { font-size:clamp(13px,2.4vw,17px); max-width:620px; line-height:1.5; color:#e9d9ff; }
+  .btn {
+    margin-top:8px; padding:12px 30px; font-size:17px; font-weight:800; color:#3a1655;
+    background:linear-gradient(180deg,#ffe28a,#ffb347); border:none; border-radius:30px;
+    box-shadow:0 5px 0 #b3730a, 0 8px 14px rgba(0,0,0,.4); cursor:pointer;
+  }
+  .btn:active { transform:translateY(3px); box-shadow:0 2px 0 #b3730a; }
+  #end-screen { display:none; }
+  #end-screen.show { display:flex; }
+  .badge { font-size:46px; }
+
+  /* --- Level intro card --- */
+  #level-intro {
+    display:none; z-index:60;
+    background:radial-gradient(ellipse at center, rgba(30,10,50,0.92), rgba(10,5,20,0.97));
+  }
+  #level-intro.show { display:flex; }
+  #level-intro h1 { font-size:clamp(24px,5vw,40px); }
+  #level-intro p { color:#ffd9a0; }
+
+  /* --- Dialogue (visual novel) box --- */
+  #dialogue-overlay {
+    position:absolute; inset:0; z-index:55; display:none;
+    align-items:flex-end; justify-content:center; padding:0 0 18px 0;
+  }
+  #dialogue-overlay.show { display:flex; }
+  .dialogue-panel {
+    width:min(92%, 720px); background:rgba(15,10,30,0.88); border:2px solid rgba(255,213,74,0.5);
+    border-radius:16px; padding:14px 18px; display:flex; gap:14px; align-items:flex-start;
+    box-shadow:0 10px 30px rgba(0,0,0,0.5); backdrop-filter:blur(2px);
+  }
+  .dlg-portrait {
+    flex:0 0 auto; width:52px; height:52px; border-radius:50%; display:flex;
+    align-items:center; justify-content:center; font-size:26px;
+    background:rgba(255,255,255,0.08);
+  }
+  .dlg-portrait.batin { border:3px solid #7fa8ff; }
+  .dlg-portrait.prenses { border:3px solid #ff8fc0; }
+  .dlg-body { flex:1; text-align:left; }
+  .dlg-name { font-weight:800; font-size:14px; margin-bottom:4px; }
+  .dlg-name.batin { color:#8fb4ff; }
+  .dlg-name.prenses { color:#ff9fce; }
+  .dlg-text { color:#f3edff; font-size:15px; line-height:1.45; min-height:40px; }
+  .dlg-next {
+    margin-top:10px; align-self:flex-end; padding:9px 20px; font-size:14px;
+  }
+  .dlg-col { display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; }
+
+  /* --- Fade transition --- */
+  #fade {
+    position:absolute; inset:0; z-index:70; background:#000; opacity:0;
+    pointer-events:none; transition:opacity .4s ease;
+  }
+  #fade.active { opacity:1; }
+
+  /* --- Rotate overlay --- */
+  #rotate-overlay {
+    position:absolute; inset:0; z-index:90; background:#0b0620; color:#fff;
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+    text-align:center; padding:20px;
+  }
+  #rotate-overlay.force-show { display:flex; }
+  #rotate-overlay .icon { font-size:56px; animation:spin 1.6s ease-in-out infinite; }
+  @keyframes spin { 0%{transform:rotate(0deg);} 50%{transform:rotate(-90deg);} 100%{transform:rotate(-90deg);} }
+  @media (orientation: portrait) {
+    #rotate-overlay { display:flex; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <div class="lives" id="hud-lives">❤️❤️❤️</div>
+    <div class="chapter" id="hud-chapter">Bölüm 1/3</div>
+    <div class="score" id="hud-score">🪙 0</div>
+  </div>
+
+  <div id="touch-controls">
+    <div class="pad-btn" id="btn-left">◀</div>
+    <div class="pad-btn" id="btn-right">▶</div>
+    <div class="pad-btn" id="btn-jump">ZIPLA</div>
+  </div>
+
+  <div class="overlay" id="start-screen">
+    <div class="badge">🛡️⚔️</div>
+    <h1>Şövalye Batın ve Esir Prenses</h1>
+    <p>Kara büyücünün kalesinde esir tutulan Prenses'i kurtarmak için yola çıkan cesur şövalye Batın'a yardım et!
+    3 bölümlük bu maceada engelleri aş, canavarların üstüne zıplayarak onları alt et, altınları topla ve her bölümün
+    sonunda Batın ile Prenses'in aşk dolu anlarına tanık ol.</p>
+    <p style="opacity:.8">Sol/Sağ dokun: hareket &nbsp;•&nbsp; ZIPLA: zıpla (canavarların üstüne basarak yenebilirsin) &nbsp;•&nbsp; Klavye: ok tuşları / boşluk</p>
+    <button class="btn" id="start-btn">BAŞLA ▶</button>
+  </div>
+
+  <div class="overlay" id="level-intro">
+    <div class="badge" id="intro-badge">🌲</div>
+    <h1 id="intro-title">Bölüm 1: Orman Günü</h1>
+    <p id="intro-subtitle">Kalenin dışındaki ormanlık yollardan geç</p>
+    <p style="opacity:.7">(devam etmek için dokun)</p>
+  </div>
+
+  <div class="overlay" id="end-screen">
+    <div class="badge" id="end-badge">🎉</div>
+    <h1 id="end-title">Prensesi Kurtardın!</h1>
+    <p id="end-text">Şövalye Batın kaleyi aştı ve Prenses'i özgürlüğüne kavuşturdu.</p>
+    <p id="end-score" style="color:#ffd35c;font-weight:700;"></p>
+    <button class="btn" id="restart-btn">TEKRAR OYNA ↺</button>
+  </div>
+
+  <div id="dialogue-overlay">
+    <div class="dlg-col">
+      <div class="dialogue-panel">
+        <div class="dlg-portrait" id="dlg-portrait">🛡️</div>
+        <div class="dlg-body">
+          <div class="dlg-name" id="dlg-name">Batın</div>
+          <div class="dlg-text" id="dlg-text">...</div>
+        </div>
+      </div>
+      <button class="btn dlg-next" id="dlg-next">Devam ▶</button>
+    </div>
+  </div>
+
+  <div id="fade"></div>
+
+  <div id="rotate-overlay">
+    <div class="icon">📱</div>
+    <h1 style="color:#ffd35c;font-size:20px;">Cihazını yatay çevir</h1>
+    <p style="color:#e9d9ff;">Bu oyun yatay (landscape) modda oynanır.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Canvas & scaling ----------
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const LOGICAL_W = 960, LOGICAL_H = 540;
+  canvas.width = LOGICAL_W;
+  canvas.height = LOGICAL_H;
+
+  function resize(){
+    const app = document.getElementById('app');
+    const vw = app.clientWidth, vh = app.clientHeight;
+    const scale = Math.min(vw / LOGICAL_W, vh / LOGICAL_H);
+    canvas.style.width = (LOGICAL_W * scale) + 'px';
+    canvas.style.height = (LOGICAL_H * scale) + 'px';
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 200));
+  resize();
+
+  // ---------- Orientation guard (CSS media query + JS fallback belt-and-suspenders) ----------
+  const rotateOverlay = document.getElementById('rotate-overlay');
+  function checkOrientation(){
+    const portrait = window.innerHeight > window.innerWidth;
+    rotateOverlay.classList.toggle('force-show', portrait);
+  }
+  window.addEventListener('resize', checkOrientation);
+  window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 150));
+  checkOrientation();
+
+  // ---------- Audio (simple WebAudio beeps, no assets) ----------
+  let actx = null;
+  function sfx(freq, dur, type, vol){
+    if (!actx) return;
+    try {
+      const o = actx.createOscillator();
+      const g = actx.createGain();
+      o.type = type || 'square';
+      o.frequency.value = freq;
+      g.gain.value = (vol!==undefined?vol:0.08);
+      o.connect(g); g.connect(actx.destination);
+      const now = actx.currentTime;
+      g.gain.setValueAtTime(g.gain.value, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      o.start(now); o.stop(now + dur);
+    } catch(e){}
+  }
+  const Sound = {
+    jump:  () => sfx(520, 0.12, 'square', 0.07),
+    coin:  () => { sfx(880,0.08,'square',0.06); setTimeout(()=>sfx(1320,0.1,'square',0.06),60); },
+    stomp: () => sfx(160, 0.14, 'square', 0.09),
+    hurt:  () => sfx(120, 0.25, 'sawtooth', 0.09),
+    win:   () => { [660,880,990,1320].forEach((f,i)=>setTimeout(()=>sfx(f,0.2,'square',0.07), i*140)); },
+    chime: () => { [520,780].forEach((f,i)=>setTimeout(()=>sfx(f,0.16,'sine',0.06), i*110)); }
+  };
+
+  // ---------- Physics constants ----------
+  const GRAVITY = 0.55;
+  const GROUND_Y = 500;
+  const SPEED = 4.3;
+  const JUMP_VEL = -12.4;
+
+  // ---------- Seeded RNG ----------
+  function mulberry32(seed){
+    return function(){
+      let t = seed += 0x6D2B79F5;
+      t = Math.imul(t ^ t>>>15, t | 1);
+      t ^= t + Math.imul(t ^ t>>>7, t | 61);
+      return ((t ^ t>>>14) >>> 0) / 4294967296;
+    };
+  }
+
+  // ---------- Level configs (story + procedural layout params) ----------
+  const LEVEL_CONFIGS = [
+    {
+      id:0, key:'day', title:'Bölüm 1: Orman Günü', subtitle:'Kalenin dışındaki ormanlık yollardan geç', badge:'🌲',
+      segments:5, segMin:380, segMax:520, gapMin:90, gapMax:120, enemyChance:0.5, enemySpeed:1.3, plateauW:400,
+      landmarkType:'ribbon',
+      dialogue:[
+        {speaker:'batin', text:'Bu eşarp... Prenses\'in eşarbı! Demek buradan geçirilmiş.'},
+        {speaker:'batin', text:'Dayan Prenses, sana ulaşıyorum. Kalbim her adımda seninle.'},
+        {speaker:'prenses', text:'(rüzgarda yankılanan bir fısıltı) Batın... duyuyor musun beni? Sana güveniyorum.'}
+      ]
+    },
+    {
+      id:1, key:'sunset', title:'Bölüm 2: Gün Batımı Surları', subtitle:'Kalenin dış surlarını aş', badge:'🌇',
+      segments:6, segMin:360, segMax:480, gapMin:100, gapMax:130, enemyChance:0.6, enemySpeed:1.6, plateauW:420,
+      landmarkType:'tower',
+      dialogue:[
+        {speaker:'prenses', text:'Batın! Buradayım, kulenin en tepesinde!'},
+        {speaker:'batin', text:'Gün batımı bile senin güzelliğinin yanında sönük kalır. Dayan, geliyorum!'},
+        {speaker:'prenses', text:'Seni bekleyeceğim, ne olursa olsun. Aşkımız bu karanlığı yenecek.'}
+      ]
+    },
+    {
+      id:2, key:'night', title:'Bölüm 3: Gece Kulesi', subtitle:'Son engel: Prenses\'in tutulduğu kule', badge:'🌙',
+      segments:6, segMin:340, segMax:460, gapMin:100, gapMax:140, enemyChance:0.7, enemySpeed:1.9, plateauW:440,
+      landmarkType:'cage', isFinal:true,
+      dialogue:[
+        {speaker:'batin', text:'Sonunda... sana ulaştım.'},
+        {speaker:'prenses', text:'Batın! Geleceğini biliyordum. Aşkın beni bu karanlıkta hep aydınlattı.'},
+        {speaker:'batin', text:'Artık hiçbir karanlık bizi ayıramaz. Seni seviyorum Prenses.'},
+        {speaker:'prenses', text:'Ben de seni seviyorum, cesur şövalyem.'}
+      ]
+    }
+  ];
+
+  // ---------- Procedural level builder ----------
+  function buildLevel(cfg){
+    const rng = mulberry32(900 + cfg.id*131);
+    const platforms = [];
+    const coinsData = [];
+    const enemyConfigs = [];
+    const checkpoints = [50];
+    let x = 0;
+
+    for (let s=0; s<cfg.segments; s++){
+      const len = Math.floor(cfg.segMin + rng()*(cfg.segMax-cfg.segMin));
+      platforms.push({x, y:GROUND_Y, w:len, h:80});
+      checkpoints.push(x+40);
+
+      const coinCount = 2 + Math.floor(rng()*2);
+      for (let c=0;c<coinCount;c++){
+        const t = coinCount>1 ? c/(coinCount-1) : 0.5;
+        coinsData.push({x: x+50+ t*(len-100), y: GROUND_Y-40});
+      }
+
+      if (s % 2 === 1 && len > 300){
+        const fx = x + len/2 - 60;
+        platforms.push({x:fx, y:GROUND_Y-100, w:120, h:20});
+        coinsData.push({x:fx+30, y:GROUND_Y-135});
+        coinsData.push({x:fx+90, y:GROUND_Y-135});
+      }
+
+      if (s>0 && rng() < cfg.enemyChance && len > 280){
+        enemyConfigs.push({
+          x:x+len/2, y:GROUND_Y-34, w:34, h:34,
+          minX:x+60, maxX:x+len-60,
+          vx: cfg.enemySpeed + rng()*0.6, dir: rng()<0.5?1:-1
+        });
+      }
+
+      x += len;
+      if (s < cfg.segments-1){
+        const gap = Math.floor(cfg.gapMin + rng()*(cfg.gapMax-cfg.gapMin));
+        x += gap;
+      }
+    }
+
+    // stairs up to a plateau
+    const stairBaseX = x;
+    platforms.push({x:stairBaseX, y:460, w:110, h:80});
+    platforms.push({x:stairBaseX+130, y:400, w:110, h:140});
+    platforms.push({x:stairBaseX+260, y:340, w:cfg.plateauW, h:200});
+    let x2 = stairBaseX+260+cfg.plateauW;
+
+    if (cfg.segments>3){
+      enemyConfigs.push({
+        x:stairBaseX+420, y:340-34, w:34, h:34,
+        minX:stairBaseX+310, maxX:x2-150,
+        vx: cfg.enemySpeed+0.4, dir:1
+      });
+    }
+
+    // final approach: gap, ground, step, elevated landmark deck
+    const x3 = x2 + 100;
+    platforms.push({x:x3, y:GROUND_Y, w:400, h:80});
+    platforms.push({x:x3+120, y:460, w:60, h:120});
+    platforms.push({x:x3+180, y:430, w:280, h:110});
+
+    const worldWidth = x3+180+280+80;
+    const landmarkX = x3+180+140;
+
+    return {
+      key: cfg.key, title: cfg.title, subtitle: cfg.subtitle, badge: cfg.badge,
+      dialogue: cfg.dialogue, isFinal: !!cfg.isFinal,
+      platforms, coinsData, enemyConfigs, checkpoints,
+      worldWidth,
+      endTriggerX: x3+220,
+      landmarkX, landmarkY: 430, landmarkType: cfg.landmarkType
+    };
+  }
+
+  // ---------- Decorative fields (stars / fireflies), generated once ----------
+  const starsField = (() => {
+    const rng = mulberry32(42);
+    const items = [];
+    for (let i=0;i<40;i++){
+      items.push({x: rng()*1400, y: 15+rng()*220, r: 0.7+rng()*1.6, ph: rng()*Math.PI*2});
+    }
+    return items;
+  })();
+  const firefliesField = (() => {
+    const rng = mulberry32(77);
+    const items = [];
+    for (let i=0;i<14;i++){
+      items.push({x: rng()*1100, y: 260+rng()*220, ph: rng()*Math.PI*2, amp: 10+rng()*18});
+    }
+    return items;
+  })();
+
+  function drawTiled(items, tileW, parallax, camX, drawFn){
+    const off = -(camX*parallax);
+    const start = Math.floor((-off - 150)/tileW);
+    const end = Math.ceil((LOGICAL_W - off + 150)/tileW);
+    for (let i=start;i<=end;i++){
+      for (const it of items) drawFn(it.x + i*tileW + off, it);
+    }
+  }
+
+  // ---------- Game state ----------
+  let level, coins, enemies, player, camX, keys, touch, lives, score, gameState, invulnTimer, animT, respawnX;
+  let currentLevelIndex = 0, dialogueIndex = 0;
+
+  keys = { left:false, right:false, jump:false };
+  touch = { left:false, right:false, jump:false };
+
+  function loadLevel(idx){
+    const cfg = LEVEL_CONFIGS[idx];
+    level = buildLevel(cfg);
+    coins = level.coinsData.map(c => ({x:c.x, y:c.y, taken:false}));
+    enemies = level.enemyConfigs.map(e => Object.assign({alive:true}, e));
+    player = { x:50, y:GROUND_Y-50, w:34, h:50, vx:0, vy:0, grounded:false, facing:1 };
+    camX = 0;
+    respawnX = 50;
+    invulnTimer = 0;
+    animT = 0;
+    document.getElementById('hud-chapter').textContent = 'Bölüm ' + (idx+1) + '/3';
+  }
+
+  function resetGame(){
+    currentLevelIndex = 0;
+    lives = 3;
+    score = 0;
+    loadLevel(0);
+    gameState = 'levelIntro';
+    updateHUD();
+    showLevelIntro();
+  }
+
+  // ---------- Input: keyboard ----------
+  window.addEventListener('keydown', e => {
+    if (['ArrowLeft','a','A'].includes(e.key)) keys.left = true;
+    if (['ArrowRight','d','D'].includes(e.key)) keys.right = true;
+    if ([' ','ArrowUp','w','W'].includes(e.key)) keys.jump = true;
+  });
+  window.addEventListener('keyup', e => {
+    if (['ArrowLeft','a','A'].includes(e.key)) keys.left = false;
+    if (['ArrowRight','d','D'].includes(e.key)) keys.right = false;
+    if ([' ','ArrowUp','w','W'].includes(e.key)) keys.jump = false;
+  });
+
+  // ---------- Input: touch buttons ----------
+  function bindPad(el, onDown, onUp){
+    const down = (e)=>{ e.preventDefault(); el.classList.add('pressed'); onDown(); };
+    const up = (e)=>{ e.preventDefault(); el.classList.remove('pressed'); onUp(); };
+    el.addEventListener('touchstart', down, {passive:false});
+    el.addEventListener('touchend', up, {passive:false});
+    el.addEventListener('touchcancel', up, {passive:false});
+    el.addEventListener('mousedown', down);
+    el.addEventListener('mouseup', up);
+    el.addEventListener('mouseleave', up);
+  }
+  bindPad(document.getElementById('btn-left'),  ()=>touch.left=true,  ()=>touch.left=false);
+  bindPad(document.getElementById('btn-right'), ()=>touch.right=true, ()=>touch.right=false);
+  bindPad(document.getElementById('btn-jump'),  ()=>touch.jump=true,  ()=>touch.jump=false);
+
+  // ---------- Collision helpers ----------
+  function aabb(a,b){
+    return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+  }
+
+  function moveAndCollide(ent, dt){
+    ent.x += ent.vx * dt;
+    for (const p of level.platforms){
+      if (aabb(ent,p)){
+        if (ent.vx > 0) ent.x = p.x - ent.w;
+        else if (ent.vx < 0) ent.x = p.x + p.w;
+      }
+    }
+    if (ent.x < 0) ent.x = 0;
+    if (ent.x + ent.w > level.worldWidth) ent.x = level.worldWidth - ent.w;
+
+    ent.y += ent.vy * dt;
+    ent.grounded = false;
+    for (const p of level.platforms){
+      if (aabb(ent,p)){
+        if (ent.vy > 0){ ent.y = p.y - ent.h; ent.vy = 0; ent.grounded = true; }
+        else if (ent.vy < 0){ ent.y = p.y + p.h; ent.vy = 0; }
+      }
+    }
+  }
+
+  // ---------- HUD ----------
+  function updateHUD(){
+    document.getElementById('hud-lives').textContent = '❤️'.repeat(Math.max(lives,0)) + '🖤'.repeat(Math.max(3-lives,0));
+    document.getElementById('hud-score').textContent = '🪙 ' + score;
+  }
+
+  function loseLife(){
+    if (invulnTimer > 0) return;
+    lives--;
+    updateHUD();
+    Sound.hurt();
+    invulnTimer = 90;
+    player.vy = -8;
+    player.vx = (player.facing>0 ? -1 : 1) * 6;
+    if (lives <= 0){
+      gameState = 'dead';
+      setTimeout(showEndScreen, 700);
+    } else {
+      player.x = respawnX;
+      player.y = GROUND_Y - 60;
+      player.vy = 0;
+    }
+  }
+
+  // ---------- Update ----------
+  function update(dt){
+    if (gameState !== 'playing') return;
+    animT += dt;
+
+    const left = keys.left || touch.left;
+    const right = keys.right || touch.right;
+    const jump = keys.jump || touch.jump;
+
+    if (left && !right){ player.vx = -SPEED; player.facing = -1; }
+    else if (right && !left){ player.vx = SPEED; player.facing = 1; }
+    else player.vx = 0;
+
+    if (jump && player.grounded){
+      player.vy = JUMP_VEL;
+      player.grounded = false;
+      Sound.jump();
+    }
+
+    player.vy += GRAVITY * dt;
+    if (player.vy > 16) player.vy = 16;
+
+    moveAndCollide(player, dt);
+
+    if (player.y > LOGICAL_H + 100) loseLife();
+
+    for (const cp of level.checkpoints) if (player.x > cp) respawnX = cp;
+
+    if (invulnTimer > 0) invulnTimer -= dt;
+
+    for (const c of coins){
+      if (!c.taken && Math.hypot((player.x+player.w/2)-c.x, (player.y+player.h/2)-c.y) < 26){
+        c.taken = true; score += 10; Sound.coin(); updateHUD();
+      }
+    }
+
+    for (const en of enemies){
+      if (!en.alive) continue;
+      en.x += en.vx * en.dir * dt;
+      if (en.x < en.minX){ en.x = en.minX; en.dir = 1; }
+      if (en.x + en.w > en.maxX){ en.x = en.maxX - en.w; en.dir = -1; }
+
+      if (aabb(player, en)){
+        const stomp = player.vy > 0 && (player.y + player.h) - en.y < 18;
+        if (stomp){
+          en.alive = false;
+          player.vy = -9;
+          score += 50;
+          Sound.stomp();
+          updateHUD();
+        } else {
+          loseLife();
+        }
+      }
+    }
+
+    if (gameState === 'playing' && player.x > level.endTriggerX){
+      gameState = 'dialogue';
+      dialogueIndex = 0;
+      Sound.chime();
+      showDialogueLine();
+    }
+
+    camX = Math.max(0, Math.min(player.x + player.w/2 - LOGICAL_W/2, level.worldWidth - LOGICAL_W));
+  }
+
+  // ---------- Background themes ----------
+  const THEME_COLORS = {
+    day:    { dirt:'#8a5a34', grassTop:'#4caf50', grassLight:'#63c96b' },
+    sunset: { dirt:'#6b3f2a', grassTop:'#cc7a3a', grassLight:'#e0995a' },
+    night:  { dirt:'#2e2a40', grassTop:'#2f5a4a', grassLight:'#3f7a63' }
+  };
+
+  function drawBackgroundDay(){
+    const g = ctx.createLinearGradient(0,0,0,LOGICAL_H);
+    g.addColorStop(0,'#6ec3f4'); g.addColorStop(1,'#bfe8ff');
+    ctx.fillStyle = g; ctx.fillRect(0,0,LOGICAL_W,LOGICAL_H);
+
+    ctx.fillStyle = 'rgba(60,140,90,0.35)';
+    drawTiled([{x:0},{x:200}], 400, 0.3, camX, (sx)=>{
+      ctx.beginPath(); ctx.ellipse(sx+200, LOGICAL_H-40, 220, 90, 0, Math.PI, 0); ctx.fill();
+    });
+
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    drawTiled([{x:80,y:90},{x:330,y:130}], 500, 0.5, camX, (sx,it)=> drawCloud(sx, it.y));
+  }
+
+  function drawCloud(x,y){
+    ctx.beginPath();
+    ctx.ellipse(x,y,28,18,0,0,Math.PI*2);
+    ctx.ellipse(x+26,y+6,22,15,0,0,Math.PI*2);
+    ctx.ellipse(x-24,y+8,20,14,0,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  function drawBackgroundSunset(){
+    const g = ctx.createLinearGradient(0,0,0,LOGICAL_H);
+    g.addColorStop(0,'#2c1250'); g.addColorStop(0.45,'#ff7b54'); g.addColorStop(0.75,'#ffb35c'); g.addColorStop(1,'#ffd98a');
+    ctx.fillStyle = g; ctx.fillRect(0,0,LOGICAL_W,LOGICAL_H);
+
+    // sun with glow
+    const sunX = LOGICAL_W*0.7 - camX*0.05, sunY = 300;
+    const glow = ctx.createRadialGradient(sunX,sunY,10,sunX,sunY,140);
+    glow.addColorStop(0,'rgba(255,220,140,0.55)');
+    glow.addColorStop(1,'rgba(255,220,140,0)');
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(sunX,sunY,140,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ffe08a';
+    ctx.beginPath(); ctx.arc(sunX,sunY,46,0,Math.PI*2); ctx.fill();
+
+    // birds
+    ctx.strokeStyle = 'rgba(40,20,45,0.6)'; ctx.lineWidth = 2;
+    drawTiled([{x:60,y:150},{x:220,y:120},{x:380,y:170}], 480, 0.45, camX, (sx,it)=>{
+      ctx.beginPath();
+      ctx.moveTo(sx-8, it.y); ctx.quadraticCurveTo(sx, it.y-6, sx+8, it.y);
+      ctx.moveTo(sx+2, it.y); ctx.quadraticCurveTo(sx+10, it.y-6, sx+18, it.y);
+      ctx.stroke();
+    });
+
+    // silhouette hills
+    ctx.fillStyle = 'rgba(45,20,45,0.55)';
+    drawTiled([{x:0}], 420, 0.3, camX, (sx)=>{
+      ctx.beginPath(); ctx.ellipse(sx+200, LOGICAL_H-30, 240, 100, 0, Math.PI, 0); ctx.fill();
+    });
+  }
+
+  function drawBackgroundNight(){
+    const g = ctx.createLinearGradient(0,0,0,LOGICAL_H);
+    g.addColorStop(0,'#050814'); g.addColorStop(0.55,'#0d1638'); g.addColorStop(1,'#1b2a52');
+    ctx.fillStyle = g; ctx.fillRect(0,0,LOGICAL_W,LOGICAL_H);
+
+    // moon with glow
+    const moonX = LOGICAL_W*0.78 - camX*0.04, moonY = 100;
+    const glow = ctx.createRadialGradient(moonX,moonY,5,moonX,moonY,110);
+    glow.addColorStop(0,'rgba(220,230,255,0.35)');
+    glow.addColorStop(1,'rgba(220,230,255,0)');
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(moonX,moonY,110,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#eef2ff';
+    ctx.beginPath(); ctx.arc(moonX,moonY,34,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(160,175,210,0.5)';
+    ctx.beginPath(); ctx.arc(moonX-10,moonY-6,5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(moonX+8,moonY+10,7,0,Math.PI*2); ctx.fill();
+
+    // stars (twinkle)
+    ctx.fillStyle = '#fff';
+    drawTiled(starsField, 1400, 0.15, camX, (sx,it)=>{
+      const a = 0.4 + 0.6*Math.abs(Math.sin(animT*0.03 + it.ph));
+      ctx.globalAlpha = a;
+      ctx.beginPath(); ctx.arc(sx, it.y, it.r, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    // silhouette hills
+    ctx.fillStyle = 'rgba(8,6,22,0.85)';
+    drawTiled([{x:0}], 420, 0.3, camX, (sx)=>{
+      ctx.beginPath(); ctx.ellipse(sx+200, LOGICAL_H-30, 240, 100, 0, Math.PI, 0); ctx.fill();
+    });
+
+    // fireflies
+    drawTiled(firefliesField, 1100, 0.6, camX, (sx,it)=>{
+      const fy = it.y + Math.sin(animT*0.04 + it.ph) * it.amp;
+      const fx = sx + Math.cos(animT*0.03 + it.ph) * 10;
+      ctx.save();
+      ctx.shadowColor = '#c8ff6a'; ctx.shadowBlur = 8;
+      ctx.fillStyle = 'rgba(220,255,140,0.9)';
+      ctx.beginPath(); ctx.arc(fx, fy, 2.2, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    });
+  }
+
+  function drawBackground(){
+    if (level.key === 'sunset') drawBackgroundSunset();
+    else if (level.key === 'night') drawBackgroundNight();
+    else drawBackgroundDay();
+  }
+
+  function drawPlatforms(){
+    const c = THEME_COLORS[level.key];
+    for (const p of level.platforms){
+      const sx = p.x - camX;
+      if (sx + p.w < 0 || sx > LOGICAL_W) continue;
+      ctx.fillStyle = c.dirt;
+      ctx.fillRect(sx, p.y, p.w, Math.min(p.h, LOGICAL_H - p.y + 40));
+      ctx.fillStyle = c.grassTop;
+      ctx.fillRect(sx, p.y, p.w, 14);
+      ctx.fillStyle = c.grassLight;
+      ctx.fillRect(sx, p.y, p.w, 6);
+      ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+      for (let bx = 0; bx < p.w; bx += 30){
+        ctx.beginPath(); ctx.moveTo(sx+bx, p.y+14); ctx.lineTo(sx+bx, p.y+Math.min(p.h,60)); ctx.stroke();
+      }
+    }
+  }
+
+  function drawCoins(){
+    for (const c of coins){
+      if (c.taken) continue;
+      const sx = c.x - camX;
+      if (sx < -20 || sx > LOGICAL_W+20) continue;
+      const bob = Math.sin(animT*0.08 + c.x) * 3;
+      ctx.save();
+      ctx.translate(sx, c.y + bob);
+      ctx.fillStyle = '#ffd54a';
+      ctx.strokeStyle = '#c98a00';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(0,0,9,11,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fff3c4';
+      ctx.beginPath(); ctx.ellipse(-3,-3,3,4,0,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawGoblin(en){
+    const sx = en.x - camX;
+    if (sx < -60 || sx > LOGICAL_W+60) return;
+    const bob = Math.sin(animT*0.2 + en.x) * 2;
+    ctx.save();
+    ctx.translate(sx + en.w/2, en.y + en.h/2 + bob);
+    ctx.scale(en.dir,1);
+    ctx.fillStyle = '#4a9c4a';
+    ctx.beginPath(); ctx.ellipse(0,4,15,14,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#2e6e2e';
+    ctx.beginPath(); ctx.moveTo(-8,-8); ctx.lineTo(-12,-18); ctx.lineTo(-4,-10); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(8,-8); ctx.lineTo(12,-18); ctx.lineTo(4,-10); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(5,0,3.5,4,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#a00';
+    ctx.beginPath(); ctx.ellipse(6,0,1.6,2,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.moveTo(2,10); ctx.lineTo(5,15); ctx.lineTo(8,10); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawPlayer(){
+    const sx = player.x - camX;
+    const moving = Math.abs(player.vx) > 0.1 && player.grounded;
+    const legSwing = moving ? Math.sin(animT*0.35) * 10 : 0;
+    const blink = invulnTimer > 0 && Math.floor(animT/4) % 2 === 0;
+    if (blink) ctx.globalAlpha = 0.35;
+
+    ctx.save();
+    ctx.translate(sx + player.w/2, player.y + player.h/2);
+    ctx.scale(player.facing, 1);
+
+    ctx.strokeStyle = '#2b3a67'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-4, 8); ctx.lineTo(-4 + legSwing*0.3, 23);
+    ctx.moveTo(4, 8); ctx.lineTo(4 - legSwing*0.3, 23);
+    ctx.stroke();
+
+    ctx.fillStyle = '#7a1f2b';
+    ctx.beginPath(); ctx.moveTo(-9,-10); ctx.lineTo(-15,18); ctx.lineTo(-4,10); ctx.fill();
+
+    ctx.fillStyle = '#5b6b8c';
+    ctx.fillRect(-10,-8,20,20);
+    ctx.fillStyle = '#c8322f';
+    ctx.fillRect(-3,-8,6,20);
+
+    ctx.strokeStyle = '#5b6b8c'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(8,-2); ctx.lineTo(16,-10); ctx.stroke();
+    ctx.strokeStyle = '#dcdfe6'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(16,-10); ctx.lineTo(24,-22); ctx.stroke();
+    ctx.strokeStyle = '#caa23a'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(14,-9); ctx.lineTo(19,-13); ctx.stroke();
+
+    ctx.fillStyle = '#9aa5b8';
+    ctx.beginPath(); ctx.arc(0,-16,10,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#5b6b8c';
+    ctx.fillRect(-10,-18,20,6);
+    ctx.fillStyle = '#222';
+    ctx.fillRect(-6,-17,12,3);
+    ctx.fillStyle = '#ffcf4a';
+    ctx.beginPath(); ctx.moveTo(-3,-26); ctx.lineTo(0,-31); ctx.lineTo(3,-26); ctx.fill();
+
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPrincessFigure(cx, cy){
+    const sway = Math.sin(animT*0.05) * 2;
+    ctx.save();
+    ctx.translate(cx + sway, cy);
+    ctx.fillStyle = '#ff6fa5';
+    ctx.beginPath();
+    ctx.moveTo(-11,10); ctx.lineTo(11,10); ctx.lineTo(6,32); ctx.lineTo(-6,32); ctx.fill();
+    ctx.fillStyle = '#ffe4ec';
+    ctx.fillRect(-6,-2,12,14);
+    ctx.strokeStyle = '#ffe4ec'; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-6,4); ctx.lineTo(-13,-2); ctx.moveTo(6,4); ctx.lineTo(13,-2); ctx.stroke();
+    ctx.fillStyle = '#ffe0c2';
+    ctx.beginPath(); ctx.arc(0,-10,9,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#f4c430';
+    ctx.beginPath(); ctx.arc(0,-13,9,Math.PI,Math.PI*2); ctx.fill();
+    ctx.fillRect(-9,-13,4,20);
+    ctx.fillRect(5,-13,4,20);
+    ctx.fillStyle = '#ffd54a';
+    ctx.beginPath();
+    ctx.moveTo(-6,-19); ctx.lineTo(-3,-25); ctx.lineTo(0,-19); ctx.lineTo(3,-25); ctx.lineTo(6,-19); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawRibbonLandmark(lx, ly){
+    const sx = lx - camX;
+    if (sx < -100 || sx > LOGICAL_W+100) return;
+    ctx.fillStyle = '#6b4a2a';
+    ctx.fillRect(sx-4, ly-100, 8, 100);
+    const wave = Math.sin(animT*0.08) * 8;
+    ctx.fillStyle = '#ff6fa5';
+    ctx.beginPath();
+    ctx.moveTo(sx+4, ly-96);
+    ctx.quadraticCurveTo(sx+40+wave, ly-90, sx+50+wave, ly-70);
+    ctx.quadraticCurveTo(sx+38+wave, ly-74, sx+4, ly-70);
+    ctx.fill();
+    ctx.fillStyle = '#ffd9e8';
+    ctx.beginPath(); ctx.ellipse(sx, ly-102, 6, 6, 0, 0, Math.PI*2); ctx.fill();
+  }
+
+  function drawTowerLandmark(lx, ly){
+    const sx = lx - camX;
+    if (sx < -140 || sx > LOGICAL_W+140) return;
+    ctx.fillStyle = '#8a7561';
+    ctx.fillRect(sx-55, ly-190, 110, 190);
+    ctx.fillStyle = '#6f5c4b';
+    for (let i=-50;i<=50;i+=20) ctx.fillRect(sx+i-8, ly-190, 16, 16);
+    ctx.fillStyle = '#3a2b1e';
+    ctx.beginPath();
+    ctx.moveTo(sx-18, ly-120); ctx.quadraticCurveTo(sx, ly-150, sx+18, ly-120);
+    ctx.lineTo(sx+18, ly-90); ctx.lineTo(sx-18, ly-90); ctx.fill();
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(sx-16, ly-118); ctx.quadraticCurveTo(sx, ly-146, sx+16, ly-118);
+    ctx.lineTo(sx+16, ly-92); ctx.lineTo(sx-16, ly-92); ctx.clip();
+    drawPrincessFigure(sx, ly-95);
+    ctx.restore();
+    ctx.fillStyle = '#6b4a2a';
+    ctx.fillRect(sx+40, ly-230, 4, 42);
+    const wave = Math.sin(animT*0.1) * 6;
+    ctx.fillStyle = '#ff9fce';
+    ctx.beginPath();
+    ctx.moveTo(sx+44, ly-228);
+    ctx.quadraticCurveTo(sx+66+wave, ly-224, sx+70+wave, ly-212);
+    ctx.quadraticCurveTo(sx+58+wave, ly-216, sx+44, ly-212);
+    ctx.fill();
+  }
+
+  function drawCageLandmark(lx, ly){
+    const cx = lx - camX, cy = ly - 50;
+    if (cx < -100 || cx > LOGICAL_W+100) return;
+    ctx.fillStyle = 'rgba(255,213,74,0.15)';
+    ctx.beginPath(); ctx.ellipse(cx, cy+50, 90, 20, 0, 0, Math.PI*2); ctx.fill();
+    drawPrincessFigure(cx, cy);
+    ctx.strokeStyle = '#3a2b1e';
+    ctx.lineWidth = 5;
+    for (let i=-30;i<=30;i+=12){
+      ctx.beginPath(); ctx.moveTo(cx+i, cy-45); ctx.lineTo(cx+i, cy+40); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.moveTo(cx-34, cy-45); ctx.lineTo(cx+34, cy-45); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-34, cy+40); ctx.lineTo(cx+34, cy+40); ctx.stroke();
+  }
+
+  function drawLandmark(){
+    if (level.landmarkType === 'ribbon') drawRibbonLandmark(level.landmarkX, level.landmarkY);
+    else if (level.landmarkType === 'tower') drawTowerLandmark(level.landmarkX, level.landmarkY);
+    else drawCageLandmark(level.landmarkX, level.landmarkY);
+  }
+
+  function draw(){
+    drawBackground();
+    drawPlatforms();
+    drawCoins();
+    drawLandmark();
+    for (const en of enemies) if (en.alive) drawGoblin(en);
+    drawPlayer();
+  }
+
+  // ---------- Loop ----------
+  let lastTime = 0;
+  function loop(ts){
+    if (!lastTime) lastTime = ts;
+    let dt = (ts - lastTime) / 16.6667;
+    if (dt > 2.5) dt = 2.5;
+    lastTime = ts;
+    if (level){
+      update(dt);
+      draw();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Screens ----------
+  const startScreen = document.getElementById('start-screen');
+  const endScreen = document.getElementById('end-screen');
+  const touchControls = document.getElementById('touch-controls');
+  const levelIntro = document.getElementById('level-intro');
+  const dialogueOverlay = document.getElementById('dialogue-overlay');
+  const fadeEl = document.getElementById('fade');
+
+  function fadeTransition(mid, done){
+    fadeEl.classList.add('active');
+    setTimeout(() => {
+      mid();
+      setTimeout(() => {
+        fadeEl.classList.remove('active');
+        if (done) setTimeout(done, 400);
+      }, 60);
+    }, 420);
+  }
+
+  function showLevelIntro(){
+    document.getElementById('intro-badge').textContent = level.badge;
+    document.getElementById('intro-title').textContent = level.title;
+    document.getElementById('intro-subtitle').textContent = level.subtitle;
+    levelIntro.classList.add('show');
+    gameState = 'levelIntro';
+    const skip = () => {
+      levelIntro.classList.remove('show');
+      levelIntro.removeEventListener('click', skip);
+      gameState = 'playing';
+    };
+    levelIntro.addEventListener('click', skip);
+    setTimeout(() => { if (levelIntro.classList.contains('show')) skip(); }, 2600);
+  }
+
+  function showDialogueLine(){
+    const line = level.dialogue[dialogueIndex];
+    const portrait = document.getElementById('dlg-portrait');
+    const name = document.getElementById('dlg-name');
+    const text = document.getElementById('dlg-text');
+    const next = document.getElementById('dlg-next');
+
+    const isBatin = line.speaker === 'batin';
+    portrait.textContent = isBatin ? '🛡️' : '👑';
+    portrait.className = 'dlg-portrait ' + (isBatin ? 'batin' : 'prenses');
+    name.textContent = isBatin ? 'Şövalye Batın' : 'Prenses';
+    name.className = 'dlg-name ' + (isBatin ? 'batin' : 'prenses');
+    text.textContent = line.text;
+
+    const isLast = dialogueIndex === level.dialogue.length - 1;
+    next.textContent = !isLast ? 'Devam ▶' : (level.isFinal ? 'Prensesi Kurtar! 🎉' : 'Sonraki Bölüm ▶');
+
+    dialogueOverlay.classList.add('show');
+  }
+
+  document.getElementById('dlg-next').addEventListener('click', () => {
+    const isLast = dialogueIndex === level.dialogue.length - 1;
+    if (!isLast){
+      dialogueIndex++;
+      showDialogueLine();
+      return;
+    }
+    dialogueOverlay.classList.remove('show');
+    if (level.isFinal){
+      gameState = 'win';
+      Sound.win();
+      showEndScreen();
+    } else {
+      goToNextLevel();
+    }
+  });
+
+  function goToNextLevel(){
+    fadeTransition(() => {
+      currentLevelIndex++;
+      loadLevel(currentLevelIndex);
+      updateHUD();
+    }, () => {
+      showLevelIntro();
+    });
+  }
+
+  function showEndScreen(){
+    const badge = document.getElementById('end-badge');
+    const title = document.getElementById('end-title');
+    const text = document.getElementById('end-text');
+    const scoreEl = document.getElementById('end-score');
+    if (gameState === 'win'){
+      badge.textContent = '👑💖';
+      title.textContent = 'Sonsuza Kadar Mutlu Yaşadılar';
+      text.textContent = 'Şövalye Batın, Prenses\'i kurtardı. Aşkları tüm karanlıkları yendi.';
+    } else {
+      badge.textContent = '💀';
+      title.textContent = 'Şövalye Batın Yenildi...';
+      text.textContent = 'Kaleyi geçemedin ama pes etme, tekrar dene!';
+    }
+    scoreEl.textContent = 'Toplam Puan: ' + score;
+    endScreen.classList.add('show');
+  }
+
+  function isTouchDevice(){
+    return ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  }
+
+  document.getElementById('start-btn').addEventListener('click', () => {
+    if (!actx){
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+    }
+    try {
+      if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+      if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{});
+    } catch(e){}
+    startScreen.style.display = 'none';
+    if (isTouchDevice()) touchControls.classList.add('active');
+    resetGame();
+    requestAnimationFrame(loop);
+  });
+
+  document.getElementById('restart-btn').addEventListener('click', () => {
+    endScreen.classList.remove('show');
+    resetGame();
+  });
+
+})();
+</script>
+</body>
+</html>
