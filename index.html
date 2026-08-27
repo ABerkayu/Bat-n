@@ -803,13 +803,18 @@
     ctx.beginPath(); ctx.moveTo(-6,4); ctx.lineTo(-13,-2); ctx.moveTo(6,4); ctx.lineTo(13,-2); ctx.stroke();
     ctx.fillStyle = '#ffe0c2';
     ctx.beginPath(); ctx.arc(0,-10,9,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#f4c430';
-    ctx.beginPath(); ctx.arc(0,-13,9,Math.PI,Math.PI*2); ctx.fill();
-    ctx.fillRect(-9,-13,4,20);
-    ctx.fillRect(5,-13,4,20);
+    // esmer saç, başörtüsünün önünden hafifçe görünüyor
+    ctx.fillStyle = '#3b2414';
+    ctx.fillRect(-5,-16,10,5);
+    // başörtüsü: saçı örtüp omuzlara kadar dökülüyor
+    ctx.fillStyle = '#8a4fae';
+    ctx.beginPath(); ctx.arc(0,-14,9.5,Math.PI,Math.PI*2); ctx.fill();
+    ctx.fillRect(-9.5,-14,5,24);
+    ctx.fillRect(4.5,-14,5,24);
+    ctx.fillStyle = '#a86bc4';
+    ctx.beginPath(); ctx.arc(0,-15,9.5,Math.PI*1.1,Math.PI*1.9); ctx.fill();
     ctx.fillStyle = '#ffd54a';
-    ctx.beginPath();
-    ctx.moveTo(-6,-19); ctx.lineTo(-3,-25); ctx.lineTo(0,-19); ctx.lineTo(3,-25); ctx.lineTo(6,-19); ctx.fill();
+    ctx.beginPath(); ctx.arc(-2,-20,2.4,0,Math.PI*2); ctx.fill();
     ctx.restore();
   }
 
