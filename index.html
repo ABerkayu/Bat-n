@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Şövalye Batın ve Esir Prenses</title>
+<title>Şövalye Batın ve Esir Prenses Nisa</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
   html,body {
@@ -162,10 +162,10 @@
 
   <div class="overlay" id="start-screen">
     <div class="badge">🛡️⚔️</div>
-    <h1>Şövalye Batın ve Esir Prenses</h1>
-    <p>Kara büyücünün kalesinde esir tutulan Prenses'i kurtarmak için yola çıkan cesur şövalye Batın'a yardım et!
+    <h1>Şövalye Batın ve Esir Prenses Nisa</h1>
+    <p>Kara büyücünün kalesinde esir tutulan Prenses Nisa'yı kurtarmak için yola çıkan cesur şövalye Batın'a yardım et!
     3 bölümlük bu maceada engelleri aş, canavarların üstüne zıplayarak onları alt et, altınları topla ve her bölümün
-    sonunda Batın ile Prenses'in aşk dolu anlarına tanık ol.</p>
+    sonunda Batın ile Prenses Nisa'nın aşk dolu anlarına tanık ol.</p>
     <p class="ctrl-hint" style="opacity:.8">Sol/Sağ dokun: hareket &nbsp;•&nbsp; ZIPLA: zıpla (canavarların üstüne basarak yenebilirsin) &nbsp;•&nbsp; Klavye: ok tuşları / boşluk</p>
     <button class="btn" id="start-btn">BAŞLA ▶</button>
   </div>
@@ -179,8 +179,8 @@
 
   <div class="overlay" id="end-screen">
     <div class="badge" id="end-badge">🎉</div>
-    <h1 id="end-title">Prensesi Kurtardın!</h1>
-    <p id="end-text">Şövalye Batın kaleyi aştı ve Prenses'i özgürlüğüne kavuşturdu.</p>
+    <h1 id="end-title">Prenses Nisa'yı Kurtardın!</h1>
+    <p id="end-text">Şövalye Batın kaleyi aştı ve Prenses Nisa'yı özgürlüğüne kavuşturdu.</p>
     <p id="end-score" style="color:#ffd35c;font-weight:700;"></p>
     <button class="btn" id="restart-btn">TEKRAR OYNA ↺</button>
   </div>
@@ -288,8 +288,8 @@
       segments:5, segMin:380, segMax:520, gapMin:90, gapMax:120, enemyChance:0.5, enemySpeed:1.3, plateauW:400,
       landmarkType:'ribbon',
       dialogue:[
-        {speaker:'batin', text:'Bu eşarp... Prenses\'in eşarbı! Demek buradan geçirilmiş.'},
-        {speaker:'batin', text:'Dayan Prenses, sana ulaşıyorum. Kalbim her adımda seninle.'},
+        {speaker:'batin', text:'Bu eşarp... Prenses Nisa\'nın eşarbı! Demek buradan geçirilmiş.'},
+        {speaker:'batin', text:'Dayan Prenses Nisa, sana ulaşıyorum. Kalbim her adımda seninle.'},
         {speaker:'prenses', text:'(rüzgarda yankılanan bir fısıltı) Batın... duyuyor musun beni? Sana güveniyorum.'}
       ]
     },
@@ -304,13 +304,13 @@
       ]
     },
     {
-      id:2, key:'night', title:'Bölüm 3: Gece Kulesi', subtitle:'Son engel: Prenses\'in tutulduğu kule', badge:'🌙',
+      id:2, key:'night', title:'Bölüm 3: Gece Kulesi', subtitle:'Son engel: Prenses Nisa\'nın tutulduğu kule', badge:'🌙',
       segments:6, segMin:340, segMax:460, gapMin:100, gapMax:140, enemyChance:0.7, enemySpeed:1.9, plateauW:440,
       landmarkType:'cage', isFinal:true,
       dialogue:[
         {speaker:'batin', text:'Sonunda... sana ulaştım.'},
         {speaker:'prenses', text:'Batın! Geleceğini biliyordum. Aşkın beni bu karanlıkta hep aydınlattı.'},
-        {speaker:'batin', text:'Artık hiçbir karanlık bizi ayıramaz. Seni seviyorum Prenses.'},
+        {speaker:'batin', text:'Artık hiçbir karanlık bizi ayıramaz. Seni seviyorum Prenses Nisa.'},
         {speaker:'prenses', text:'Ben de seni seviyorum, cesur şövalyem.'}
       ]
     }
@@ -963,12 +963,12 @@
     const isBatin = line.speaker === 'batin';
     portrait.textContent = isBatin ? '🛡️' : '👑';
     portrait.className = 'dlg-portrait ' + (isBatin ? 'batin' : 'prenses');
-    name.textContent = isBatin ? 'Şövalye Batın' : 'Prenses';
+    name.textContent = isBatin ? 'Şövalye Batın' : 'Prenses Nisa';
     name.className = 'dlg-name ' + (isBatin ? 'batin' : 'prenses');
     text.textContent = line.text;
 
     const isLast = dialogueIndex === level.dialogue.length - 1;
-    next.textContent = !isLast ? 'Devam ▶' : (level.isFinal ? 'Prensesi Kurtar! 🎉' : 'Sonraki Bölüm ▶');
+    next.textContent = !isLast ? 'Devam ▶' : (level.isFinal ? 'Prenses Nisa\'yı Kurtar! 🎉' : 'Sonraki Bölüm ▶');
 
     dialogueOverlay.classList.add('show');
   }
@@ -1008,7 +1008,7 @@
     if (gameState === 'win'){
       badge.textContent = '👑💖';
       title.textContent = 'Sonsuza Kadar Mutlu Yaşadılar';
-      text.textContent = 'Şövalye Batın, Prenses\'i kurtardı. Aşkları tüm karanlıkları yendi.';
+      text.textContent = 'Şövalye Batın, Prenses Nisa\'yı kurtardı. Aşkları tüm karanlıkları yendi.';
     } else {
       badge.textContent = '💀';
       title.textContent = 'Şövalye Batın Yenildi...';
